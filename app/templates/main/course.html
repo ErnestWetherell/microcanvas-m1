@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ course.code }} — {{ course.title }}</h1>
+
+  {% if current_user.is_instructor %}
+    <p>
+      <a href="{{ url_for('main.new_task', course_id=course.id) }}">
+        + New Task / Assignment
+      </a>
+    </p>
+  {% endif %}
+
+  <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+    <div>
+      <h2>To Do</h2>
+      {% if tasks_todo %}
+        <ul>
+          {% for t in tasks_todo %}
+            <li>
+              <strong>{{ t.title }}</strong> ({{ t.points }} pts)
+              {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.toggle_task', task_id=t.id) }}">
+                  Mark done
+                </a>
+              {% endif %}
+              {% if current_user.is_instructor %}
+                | <a href="{{ url_for('main.grade_task', task_id=t.id) }}">Grade</a>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No tasks.</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <h2>In Progress</h2>
+      {% if tasks_in_progress %}
+        <ul>
+          {% for t in tasks_in_progress %}
+            <li>
+              <strong>{{ t.title }}</strong> ({{ t.points }} pts)
+              {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.toggle_task', task_id=t.id) }}">
+                  Mark done
+                </a>
+              {% endif %}
+              {% if current_user.is_instructor %}
+                | <a href="{{ url_for('main.grade_task', task_id=t.id) }}">Grade</a>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No tasks.</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <h2>Done</h2>
+      {% if tasks_done %}
+        <ul>
+          {% for t in tasks_done %}
+            <li>
+              <strong>{{ t.title }}</strong> ({{ t.points }} pts)
+              {% if t.score is not none %}
+                — score: {{ t.score }}
+              {% else %}
+                — not graded
+              {% endif %}
+              {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.toggle_task', task_id=t.id) }}">
+                  Reopen
+                </a>
+              {% endif %}
+              {% if current_user.is_instructor %}
+                | <a href="{{ url_for('main.grade_task', task_id=t.id) }}">Grade</a>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No tasks.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

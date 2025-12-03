@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>New Task for {{ course.code }} — {{ course.title }}</h1>
+
+  <form method="post">
+    {{ form.hidden_tag() }}
+
+    <p>
+      {{ form.title.label }}<br>
+      {{ form.title(size=40) }}
+    </p>
+
+    <p>
+      {{ form.description.label }}<br>
+      {{ form.description(rows=4, cols=40) }}
+    </p>
+
+    <p>
+      {{ form.due_date.label }} (YYYY-MM-DD)<br>
+      {{ form.due_date() }}
+    </p>
+
+    <p>
+      {{ form.points.label }}<br>
+      {{ form.points() }} (default 100)
+    </p>
+
+    <p>{{ form.submit() }}</p>
+  </form>
+{% endblock %}

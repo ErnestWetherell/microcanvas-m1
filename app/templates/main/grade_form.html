@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Grade: {{ task.title }}</h1>
+  <p>Course: {{ task.course.code }} — {{ task.course.title }}</p>
+  <p>Points possible: {{ task.points }}</p>
+
+  <form method="post">
+    {{ form.hidden_tag() }}
+
+    <p>
+      {{ form.score.label }}<br>
+      {{ form.score() }}
+    </p>
+
+    <p>{{ form.submit() }}</p>
+  </form>
+{% endblock %}
