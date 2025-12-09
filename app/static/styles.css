@@ -3,3 +3,10 @@ body { font-family: Arial; margin: 0; }
 .navbar a { color: white; margin-right: 15px; text-decoration: none; }
 .navbar a:hover { text-decoration: underline; }
 .flashes { background: #ffeeaa; padding: 10px; }
+.card { background: #fff; border: 1px solid #ddd; padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+main { padding: 1.5rem; }
+ul { padding-left: 1.2rem; }
+@media (max-width: 600px) {
+  .navbar { flex-direction: column; }
+}

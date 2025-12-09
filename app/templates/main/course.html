@@ -86,4 +86,37 @@
       {% endif %}
     </div>
   </div>
+
+  <section class="card">
+    <h2>Teams</h2>
+    {% if teams %}
+      <ul>
+        {% for team in teams %}
+          <li>
+            <a href="{{ url_for('main.team_detail', team_id=team.id) }}">{{ team.name }}</a>
+            — {{ team.memberships|length }} members
+            {% if team.memberships %}
+              <br>
+              <small>
+                {% for member in team.memberships %}
+                  {{ member.user.email }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+              </small>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No teams yet.</p>
+    {% endif %}
+
+    {% if current_user.is_instructor %}
+      <h3>Create a new team</h3>
+      <form method="post" action="{{ url_for('main.create_team', course_id=course.id) }}">
+        {{ team_form.hidden_tag() }}
+        {{ team_form.name(size=30) }}
+        {{ team_form.submit() }}
+      </form>
+    {% endif %}
+  </section>
 {% endblock %}

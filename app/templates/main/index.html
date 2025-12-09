@@ -6,7 +6,7 @@
   {% if current_user.is_authenticated %}
     <p>Welcome back, {{ current_user.email }} ({{ current_user.role }}).</p>
   {% else %}
-    <p>You are not logged in. Use one of the demo accounts to explore:</p>
+    <p>You are not logged in. Use one of the demo accounts below to explore the flows:</p>
     <ul>
       <li>prof@example.com (instructor)</li>
       <li>ta@example.com (ta)</li>
@@ -14,39 +14,46 @@
     </ul>
   {% endif %}
 
-  <h2>Courses</h2>
-  <ul>
-    {% for c in courses %}
-      <li>
-        <a href="{{ url_for('main.course_detail', course_id=c.id) }}">
-          {{ c.code }} — {{ c.title }}
-        </a>
-      </li>
-    {% endfor %}
-  </ul>
+  <section class="card">
+    <h2>Your courses</h2>
+    {% if courses %}
+      <ul>
+        {% for c in courses %}
+          <li>
+            <a href="{{ url_for('main.course_detail', course_id=c.id) }}">
+              {{ c.code }} — {{ c.title }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No enrollments yet. Ask an instructor to add you or browse all <a href="{{ url_for('main.courses') }}">courses</a>.</p>
+    {% endif %}
+  </section>
 
-  <h2>Upcoming Tasks (Prototype)</h2>
-  {% if upcoming_tasks %}
-    <ul>
-      {% for t in upcoming_tasks %}
-        <li>
-          {{ t.title }}
-          {% if t.course %}
-            ({{ t.course.code }})
-          {% endif %}
-          {% if t.due_date %}
-            — due {{ t.due_date }}
-          {% endif %}
-          — {{ t.points }} pts
-          {% if t.score is not none %}
-            — score: {{ t.score }}
-          {% else %}
-            — not graded
-          {% endif %}
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>No tasks yet.</p>
-  {% endif %}
+  <section class="card">
+    <h2>This week's tasks</h2>
+    {% if upcoming_tasks %}
+      <ul>
+        {% for t in upcoming_tasks %}
+          <li>
+            {{ t.title }}
+            {% if t.course %}
+              ({{ t.course.code }})
+            {% endif %}
+            {% if t.team %}
+              — team {{ t.team.name }}
+            {% endif %}
+            {% if t.due_date %}
+              — due {{ t.due_date }}
+            {% endif %}
+            — {{ t.points }} pts
+            <a href="{{ url_for('main.course_detail', course_id=t.course_id) }}">Board</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No tracked tasks for this week.</p>
+    {% endif %}
+  </section>
 {% endblock %}

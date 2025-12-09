@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ team.name }}</h1>
+  <p>Course: <a href="{{ url_for('main.course_detail', course_id=team.course.id) }}">{{ team.course.code }} — {{ team.course.title }}</a></p>
+
+  <section class="card">
+    <h2>Members</h2>
+    {% if team.memberships %}
+      <ul>
+        {% for membership in team.memberships %}
+          <li>{{ membership.user.email }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No members yet.</p>
+    {% endif %}
+
+    {% if current_user.is_instructor %}
+      {% if member_form.user_id.choices %}
+        <form method="post" action="{{ url_for('main.add_team_member', team_id=team.id) }}">
+          {{ member_form.hidden_tag() }}
+          {{ member_form.user_id() }}
+          {{ member_form.submit() }}
+        </form>
+      {% else %}
+        <p>All students in this course already belong to a team.</p>
+      {% endif %}
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Team tasks</h2>
+    {% if tasks_todo or tasks_in_progress or tasks_done %}
+      <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+        <div>
+          <h3>To do</h3>
+          {% if tasks_todo %}
+            <ul>
+              {% for t in tasks_todo %}
+                <li>{{ t.title }} — {{ t.points }} pts</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>No tasks.</p>
+          {% endif %}
+        </div>
+        <div>
+          <h3>In progress</h3>
+          {% if tasks_in_progress %}
+            <ul>
+              {% for t in tasks_in_progress %}
+                <li>{{ t.title }} — {{ t.points }} pts</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>No tasks.</p>
+          {% endif %}
+        </div>
+        <div>
+          <h3>Done</h3>
+          {% if tasks_done %}
+            <ul>
+              {% for t in tasks_done %}
+                <li>{{ t.title }} — {{ t.points }} pts</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>No tasks.</p>
+          {% endif %}
+        </div>
+      </div>
+    {% else %}
+      <p>No team-specific tasks yet. Assign a team when creating a course task.</p>
+    {% endif %}
+  </section>
+{% endblock %}

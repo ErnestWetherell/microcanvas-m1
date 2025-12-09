@@ -8,6 +8,17 @@ class User(UserMixin, db.Model):
     # global role for now: "student", "instructor", "ta"
     role = db.Column(db.String(20), default="student", nullable=False)
 
+    course_memberships = db.relationship(
+        "CourseMembership",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    team_memberships = db.relationship(
+        "TeamMembership",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
     def __repr__(self) -> str:
         return f"<User {self.email} ({self.role})>"
 
@@ -36,13 +47,70 @@ class Course(db.Model):
 
     # one-to-many relationship with tasks (assignments)
     tasks = db.relationship(
-        "Task",
+        "Task", back_populates="course", cascade="all, delete-orphan"
+    )
+    memberships = db.relationship(
+        "CourseMembership",
         back_populates="course",
         cascade="all, delete-orphan",
+    )
+    teams = db.relationship(
+        "Team", back_populates="course", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:
         return f"<Course {self.code}>"
+
+
+class CourseMembership(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
+    role = db.Column(db.String(20), default="student", nullable=False)
+
+    user = db.relationship("User", back_populates="course_memberships")
+    course = db.relationship("Course", back_populates="memberships")
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "course_id", name="uq_user_course"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<CourseMembership {self.user.email} -> {self.course.code}>"
+
+
+class Team(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
+
+    course = db.relationship("Course", back_populates="teams")
+    memberships = db.relationship(
+        "TeamMembership",
+        back_populates="team",
+        cascade="all, delete-orphan",
+    )
+    tasks = db.relationship("Task", back_populates="team")
+
+    def member_names(self):
+        return ", ".join(m.user.email for m in self.memberships) or "No members yet"
+
+    def __repr__(self) -> str:
+        return f"<Team {self.name}>"
+
+
+class TeamMembership(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey("team.id"), nullable=False)
+
+    user = db.relationship("User", back_populates="team_memberships")
+    team = db.relationship("Team", back_populates="memberships")
+
+    __table_args__ = (db.UniqueConstraint("user_id", "team_id", name="uq_user_team"),)
+
+    def __repr__(self) -> str:
+        return f"<TeamMembership {self.user.email} -> {self.team.name}>"
 
 
 class Task(db.Model):
@@ -63,7 +131,9 @@ class Task(db.Model):
     score = db.Column(db.Integer)  # None = not graded yet
 
     course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey("team.id"))
     course = db.relationship("Course", back_populates="tasks")
+    team = db.relationship("Team", back_populates="tasks")
 
     def __repr__(self) -> str:
         return f"<Task {self.title} ({self.status})>"

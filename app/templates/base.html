@@ -8,6 +8,7 @@
 <body>
   <nav class="navbar">
     <a href="{{ url_for('main.index') }}">Home</a>
+    <a href="{{ url_for('main.courses') }}">Courses</a>
     <a href="{{ url_for('main.feature') }}">Feature</a>
 
     {% if current_user.is_authenticated %}
