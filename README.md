@@ -1,4 +1,4 @@
-# MicroCanvas Prototype
+# MicroCanvas Protype
 
 MicroCanvas is a CMPE 131 mini-LMS focused on sprint-style task tracking for software project courses. It provides a lightweight dashboard for students plus instructor tooling to post tasks, organize teams, and monitor progress.
 
