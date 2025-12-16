@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user, login_required
 from app.main import main_bp
 from app import db
@@ -6,11 +6,19 @@ from app.models import (
     Course,
     CourseMembership,
     Task,
+    TaskComment,
     Team,
     TeamMembership,
     User,
 )
-from app.forms import TaskForm, GradeForm, TeamForm, TeamMemberForm
+from app.forms import (
+    TaskForm,
+    TaskStatusForm,
+    TaskCommentForm,
+    GradeForm,
+    TeamForm,
+    TeamMemberForm,
+)
 
 
 def _ensure_sample_data():
@@ -38,7 +46,7 @@ def _ensure_sample_data():
     student2 = user("student2@example.com", "student")
 
     course1 = Course(code="CMPE 131", title="Software Engineering")
-    course2 = Course(code="ISE 140", title="Production & Ops Mgmt")
+    course2 = Course(code="ISE 140", title="Operations Planning and Control")
     db.session.add_all([course1, course2])
     db.session.flush()
 
@@ -94,7 +102,21 @@ def _ensure_sample_data():
     db.session.commit()
 
 
+def _build_status_columns(tasks):
+    columns = []
+    for value, label in Task.STATUS_CHOICES:
+        columns.append(
+            {
+                "key": value,
+                "label": label,
+                "tasks": [task for task in tasks if task.status == value],
+            }
+        )
+    return columns
+
+
 @main_bp.route("/")
+@login_required
 def index():
     _ensure_sample_data()
 
@@ -118,6 +140,7 @@ def index():
 
 
 @main_bp.route("/courses")
+@login_required
 def courses():
     _ensure_sample_data()
     all_courses = Course.query.all()
@@ -129,16 +152,17 @@ def courses():
 def course_detail(course_id):
     course = Course.query.get_or_404(course_id)
 
-    tasks_todo = [t for t in course.tasks if t.status == "todo"]
-    tasks_in_progress = [t for t in course.tasks if t.status == "in_progress"]
-    tasks_done = [t for t in course.tasks if t.status == "done"]
+    status_form = TaskStatusForm()
+    status_form.status.choices = Task.STATUS_CHOICES
+    comment_form = TaskCommentForm()
 
     return render_template(
         "main/course.html",
         course=course,
-        tasks_todo=tasks_todo,
-        tasks_in_progress=tasks_in_progress,
-        tasks_done=tasks_done,
+        status_columns=_build_status_columns(course.tasks),
+        status_form=status_form,
+        comment_form=comment_form,
+        status_choices=Task.STATUS_CHOICES,
         teams=course.teams,
         team_form=TeamForm(),
     )
@@ -180,20 +204,44 @@ def new_task(course_id):
     return render_template("main/task_form.html", form=form, course=course)
 
 
-@main_bp.route("/tasks/<int:task_id>/toggle")
+@main_bp.route("/tasks/<int:task_id>/status", methods=["POST"])
 @login_required
-def toggle_task(task_id):
+def update_task_status(task_id):
     task = Task.query.get_or_404(task_id)
+    form = TaskStatusForm()
+    form.status.choices = Task.STATUS_CHOICES
 
-    # simple toggle between todo and done
-    if task.status == "done":
-        task.status = "todo"
-    else:
-        task.status = "done"
+    if not form.validate_on_submit():
+        flash("Invalid status update.")
+        return redirect(request.referrer or url_for("main.course_detail", course_id=task.course_id))
 
+    task.status = form.status.data
     db.session.commit()
     flash("Task status updated.")
-    return redirect(url_for("main.course_detail", course_id=task.course_id))
+    return redirect(request.referrer or url_for("main.course_detail", course_id=task.course_id))
+
+
+@main_bp.route("/tasks/<int:task_id>/comments", methods=["POST"])
+@login_required
+def add_task_comment(task_id):
+    task = Task.query.get_or_404(task_id)
+    if not current_user.can_review_tasks:
+        flash("Only instructors or TAs can leave feedback.")
+        return redirect(request.referrer or url_for("main.course_detail", course_id=task.course_id))
+
+    form = TaskCommentForm()
+    if form.validate_on_submit():
+        body = form.body.data.strip()
+        if not body:
+            flash("Comment cannot be empty.")
+            return redirect(request.referrer or url_for("main.course_detail", course_id=task.course_id))
+        comment = TaskComment(body=body, task=task, author=current_user)
+        db.session.add(comment)
+        db.session.commit()
+        flash("Feedback posted.")
+    else:
+        flash("Comment cannot be empty.")
+    return redirect(request.referrer or url_for("main.course_detail", course_id=task.course_id))
 
 
 @main_bp.route("/tasks/<int:task_id>/grade", methods=["GET", "POST"])
@@ -243,9 +291,6 @@ def create_team(course_id):
 @login_required
 def team_detail(team_id):
     team = Team.query.get_or_404(team_id)
-    tasks_todo = [t for t in team.tasks if t.status == "todo"]
-    tasks_done = [t for t in team.tasks if t.status == "done"]
-    tasks_progress = [t for t in team.tasks if t.status == "in_progress"]
 
     member_form = TeamMemberForm()
     course_member_ids = {m.user_id for m in team.course.memberships if m.role == "student"}
@@ -260,13 +305,18 @@ def team_detail(team_id):
         member_choices = []
     member_form.user_id.choices = member_choices
 
+    status_form = TaskStatusForm()
+    status_form.status.choices = Task.STATUS_CHOICES
+    comment_form = TaskCommentForm()
+
     return render_template(
         "main/team.html",
         team=team,
-        tasks_todo=tasks_todo,
-        tasks_in_progress=tasks_progress,
-        tasks_done=tasks_done,
+        status_columns=_build_status_columns(team.tasks),
         member_form=member_form,
+        status_form=status_form,
+        comment_form=comment_form,
+        status_choices=Task.STATUS_CHOICES,
     )
 
 

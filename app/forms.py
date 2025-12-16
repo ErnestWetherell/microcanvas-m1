@@ -28,6 +28,16 @@ class TaskForm(FlaskForm):
     submit = SubmitField("Save Task")
 
 
+class TaskStatusForm(FlaskForm):
+    status = SelectField("Status", choices=[], validators=[DataRequired()])
+    submit = SubmitField("Update")
+
+
+class TaskCommentForm(FlaskForm):
+    body = TextAreaField("Comment", validators=[DataRequired()])
+    submit = SubmitField("Post feedback")
+
+
 class GradeForm(FlaskForm):
     score = IntegerField("Score", validators=[Optional(), NumberRange(min=0, max=1000)])
     submit = SubmitField("Save Grade")

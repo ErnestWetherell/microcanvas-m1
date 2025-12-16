@@ -31,47 +31,61 @@
 
   <section class="card">
     <h2>Team tasks</h2>
-    {% if tasks_todo or tasks_in_progress or tasks_done %}
-      <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-        <div>
-          <h3>To do</h3>
-          {% if tasks_todo %}
-            <ul>
-              {% for t in tasks_todo %}
-                <li>{{ t.title }} — {{ t.points }} pts</li>
-              {% endfor %}
-            </ul>
+    <div class="board-grid">
+      {% for column in status_columns %}
+        <div class="board-column">
+          <h3>{{ column.label }}</h3>
+          {% if column.tasks %}
+            {% for task in column.tasks %}
+              <article class="task-card">
+                <header>
+                  <strong>{{ task.title }}</strong>
+                  <span class="task-points">{{ task.points }} pts</span>
+                </header>
+                {% if task.description %}
+                  <p>{{ task.description }}</p>
+                {% endif %}
+                <p class="task-meta">Course task</p>
+                <form method="post" action="{{ url_for('main.update_task_status', task_id=task.id) }}" class="status-form">
+                  {{ status_form.csrf_token }}
+                  <label class="sr-only" for="team-status-{{ task.id }}">Status</label>
+                  <select id="team-status-{{ task.id }}" name="status">
+                    {% for value, label in status_choices %}
+                      <option value="{{ value }}" {% if value == task.status %}selected{% endif %}>
+                        {{ label }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit">Update</button>
+                </form>
+                {% if task.comments %}
+                  <div class="task-comments">
+                    <strong>Feedback</strong>
+                    <ul>
+                      {% for comment in task.comments %}
+                        <li>
+                          <span class="comment-author">{{ comment.author.email }}</span>
+                          <small>{{ comment.created_at.strftime("%b %d %H:%M") }}</small>
+                          <p>{{ comment.body }}</p>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                {% endif %}
+                {% if current_user.can_review_tasks %}
+                  <form method="post" action="{{ url_for('main.add_task_comment', task_id=task.id) }}" class="comment-form">
+                    {{ comment_form.csrf_token }}
+                    {{ comment_form.body(id='team-comment-body-' ~ task.id, rows=2, placeholder='Leave quick feedback...') }}
+                    <button type="submit">Post</button>
+                  </form>
+                {% endif %}
+              </article>
+            {% endfor %}
           {% else %}
-            <p>No tasks.</p>
+            <p class="empty-state">No tasks.</p>
           {% endif %}
         </div>
-        <div>
-          <h3>In progress</h3>
-          {% if tasks_in_progress %}
-            <ul>
-              {% for t in tasks_in_progress %}
-                <li>{{ t.title }} — {{ t.points }} pts</li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p>No tasks.</p>
-          {% endif %}
-        </div>
-        <div>
-          <h3>Done</h3>
-          {% if tasks_done %}
-            <ul>
-              {% for t in tasks_done %}
-                <li>{{ t.title }} — {{ t.points }} pts</li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p>No tasks.</p>
-          {% endif %}
-        </div>
-      </div>
-    {% else %}
-      <p>No team-specific tasks yet. Assign a team when creating a course task.</p>
-    {% endif %}
+      {% endfor %}
+    </div>
   </section>
 {% endblock %}

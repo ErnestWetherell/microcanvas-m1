@@ -11,81 +11,76 @@
     </p>
   {% endif %}
 
-  <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-    <div>
-      <h2>To Do</h2>
-      {% if tasks_todo %}
-        <ul>
-          {% for t in tasks_todo %}
-            <li>
-              <strong>{{ t.title }}</strong> ({{ t.points }} pts)
-              {% if current_user.is_authenticated %}
-                <a href="{{ url_for('main.toggle_task', task_id=t.id) }}">
-                  Mark done
-                </a>
-              {% endif %}
-              {% if current_user.is_instructor %}
-                | <a href="{{ url_for('main.grade_task', task_id=t.id) }}">Grade</a>
-              {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>No tasks.</p>
-      {% endif %}
+  <section class="card">
+    <h2>Task board</h2>
+    <div class="board-grid">
+      {% for column in status_columns %}
+        <div class="board-column">
+          <h3>{{ column.label }}</h3>
+          {% if column.tasks %}
+            {% for task in column.tasks %}
+              <article class="task-card">
+                <header>
+                  <strong>{{ task.title }}</strong>
+                  <span class="task-points">{{ task.points }} pts</span>
+                </header>
+                {% if task.description %}
+                  <p>{{ task.description }}</p>
+                {% endif %}
+                {% if task.due_date %}
+                  <p class="task-meta">Due {{ task.due_date.strftime("%b %d") }}</p>
+                {% endif %}
+                {% if task.team %}
+                  <p class="task-meta">Team: {{ task.team.name }}</p>
+                {% endif %}
+                {% if task.score is not none %}
+                  <p class="task-meta">Score: {{ task.score }}</p>
+                {% endif %}
+                <form method="post" action="{{ url_for('main.update_task_status', task_id=task.id) }}" class="status-form">
+                  {{ status_form.csrf_token }}
+                  <label class="sr-only" for="status-{{ task.id }}">Status</label>
+                  <select id="status-{{ task.id }}" name="status">
+                    {% for value, label in status_choices %}
+                      <option value="{{ value }}" {% if value == task.status %}selected{% endif %}>
+                        {{ label }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit">Update</button>
+                </form>
+                {% if current_user.is_instructor %}
+                  <a class="text-link" href="{{ url_for('main.grade_task', task_id=task.id) }}">Grade</a>
+                {% endif %}
+                {% if task.comments %}
+                  <div class="task-comments">
+                    <strong>Feedback</strong>
+                    <ul>
+                      {% for comment in task.comments %}
+                        <li>
+                          <span class="comment-author">{{ comment.author.email }}</span>
+                          <small>{{ comment.created_at.strftime("%b %d %H:%M") }}</small>
+                          <p>{{ comment.body }}</p>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                {% endif %}
+                {% if current_user.can_review_tasks %}
+                  <form method="post" action="{{ url_for('main.add_task_comment', task_id=task.id) }}" class="comment-form">
+                    {{ comment_form.csrf_token }}
+                    {{ comment_form.body(id='comment-body-' ~ task.id, rows=2, placeholder='Leave quick feedback...') }}
+                    <button type="submit">Post</button>
+                  </form>
+                {% endif %}
+              </article>
+            {% endfor %}
+          {% else %}
+            <p class="empty-state">No tasks.</p>
+          {% endif %}
+        </div>
+      {% endfor %}
     </div>
-
-    <div>
-      <h2>In Progress</h2>
-      {% if tasks_in_progress %}
-        <ul>
-          {% for t in tasks_in_progress %}
-            <li>
-              <strong>{{ t.title }}</strong> ({{ t.points }} pts)
-              {% if current_user.is_authenticated %}
-                <a href="{{ url_for('main.toggle_task', task_id=t.id) }}">
-                  Mark done
-                </a>
-              {% endif %}
-              {% if current_user.is_instructor %}
-                | <a href="{{ url_for('main.grade_task', task_id=t.id) }}">Grade</a>
-              {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>No tasks.</p>
-      {% endif %}
-    </div>
-
-    <div>
-      <h2>Done</h2>
-      {% if tasks_done %}
-        <ul>
-          {% for t in tasks_done %}
-            <li>
-              <strong>{{ t.title }}</strong> ({{ t.points }} pts)
-              {% if t.score is not none %}
-                — score: {{ t.score }}
-              {% else %}
-                — not graded
-              {% endif %}
-              {% if current_user.is_authenticated %}
-                <a href="{{ url_for('main.toggle_task', task_id=t.id) }}">
-                  Reopen
-                </a>
-              {% endif %}
-              {% if current_user.is_instructor %}
-                | <a href="{{ url_for('main.grade_task', task_id=t.id) }}">Grade</a>
-              {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>No tasks.</p>
-      {% endif %}
-    </div>
-  </div>
+  </section>
 
   <section class="card">
     <h2>Teams</h2>
