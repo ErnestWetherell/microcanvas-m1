@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app import db, login_manager
 from flask_login import UserMixin
@@ -48,7 +48,7 @@ class User(UserMixin, db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 
 class Course(db.Model):
@@ -177,7 +177,11 @@ class Task(db.Model):
 class TaskComment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     task_id = db.Column(db.Integer, db.ForeignKey("task.id"), nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)

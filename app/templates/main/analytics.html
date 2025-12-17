@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Course analytics</h1>
+  <p>High-level snapshot of task progress across every course. Completion rates count the percentage of tasks in the Done column; “Late” counts tasks past their due date that are still open.</p>
+
+  {% if course_summaries %}
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Course</th>
+            <th>Total tasks</th>
+            {% for value, label in status_labels.items() %}
+              <th>{{ label }}</th>
+            {% endfor %}
+            <th>Completion %</th>
+            <th>Late tasks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for summary in course_summaries %}
+            <tr>
+              <td>{{ summary.course.code }}</td>
+              <td>{{ summary.total }}</td>
+              {% for value, label in status_labels.items() %}
+                <td>{{ summary.counts[value] }}</td>
+              {% endfor %}
+              <td>{{ "%.0f"|format(summary.completion) }}%</td>
+              <td>{{ summary.late }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p>No courses yet.</p>
+  {% endif %}
+{% endblock %}

@@ -1,3 +1,5 @@
+from datetime import date
+
 from flask import render_template, redirect, url_for, flash, request, abort
 from flask_login import current_user, login_required
 from app.main import main_bp
@@ -115,6 +117,13 @@ def _build_status_columns(tasks):
     return columns
 
 
+def _get_or_404(model, ident):
+    record = db.session.get(model, ident)
+    if record is None:
+        abort(404)
+    return record
+
+
 @main_bp.route("/")
 @login_required
 def index():
@@ -150,7 +159,7 @@ def courses():
 @main_bp.route("/courses/<int:course_id>")
 @login_required
 def course_detail(course_id):
-    course = Course.query.get_or_404(course_id)
+    course = _get_or_404(Course, course_id)
 
     status_form = TaskStatusForm()
     status_form.status.choices = Task.STATUS_CHOICES
@@ -171,7 +180,7 @@ def course_detail(course_id):
 @main_bp.route("/courses/<int:course_id>/tasks/new", methods=["GET", "POST"])
 @login_required
 def new_task(course_id):
-    course = Course.query.get_or_404(course_id)
+    course = _get_or_404(Course, course_id)
 
     if not current_user.is_instructor:
         abort(403)
@@ -190,7 +199,7 @@ def new_task(course_id):
             course=course,
         )
         if form.team_id.data:
-            task.team = Team.query.get(form.team_id.data) if form.team_id.data else None
+            task.team = db.session.get(Team, form.team_id.data) if form.team_id.data else None
         db.session.add(task)
         db.session.commit()
         flash("Task created.")
@@ -206,7 +215,7 @@ def new_task(course_id):
 @main_bp.route("/tasks/<int:task_id>/status", methods=["POST"])
 @login_required
 def update_task_status(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = _get_or_404(Task, task_id)
     form = TaskStatusForm()
     form.status.choices = Task.STATUS_CHOICES
 
@@ -222,7 +231,7 @@ def update_task_status(task_id):
 @main_bp.route("/tasks/<int:task_id>/comments", methods=["POST"])
 @login_required
 def add_task_comment(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = _get_or_404(Task, task_id)
     if not current_user.can_review_tasks:
         abort(403)
 
@@ -248,7 +257,7 @@ def grade_task(task_id):
     if not current_user.is_instructor:
         abort(403)
 
-    task = Task.query.get_or_404(task_id)
+    task = _get_or_404(Task, task_id)
     form = GradeForm()
 
     if form.validate_on_submit():
@@ -267,7 +276,7 @@ def grade_task(task_id):
 @main_bp.route("/courses/<int:course_id>/teams", methods=["POST"])
 @login_required
 def create_team(course_id):
-    course = Course.query.get_or_404(course_id)
+    course = _get_or_404(Course, course_id)
     if not current_user.is_instructor:
         abort(403)
 
@@ -285,7 +294,7 @@ def create_team(course_id):
 @main_bp.route("/teams/<int:team_id>")
 @login_required
 def team_detail(team_id):
-    team = Team.query.get_or_404(team_id)
+    team = _get_or_404(Team, team_id)
 
     member_form = TeamMemberForm()
     course_member_ids = {m.user_id for m in team.course.memberships if m.role == "student"}
@@ -318,7 +327,7 @@ def team_detail(team_id):
 @main_bp.route("/teams/<int:team_id>/members", methods=["POST"])
 @login_required
 def add_team_member(team_id):
-    team = Team.query.get_or_404(team_id)
+    team = _get_or_404(Team, team_id)
     if not current_user.is_instructor:
         abort(403)
 
@@ -342,6 +351,44 @@ def add_team_member(team_id):
     else:
         flash("Please pick a student.")
     return redirect(url_for("main.team_detail", team_id=team.id))
+
+
+@main_bp.route("/analytics")
+@login_required
+def analytics():
+    if not (current_user.is_instructor or current_user.is_ta):
+        abort(403)
+
+    _ensure_sample_data()
+    courses = Course.query.all()
+    status_labels = dict(Task.STATUS_CHOICES)
+    today = date.today()
+    summaries = []
+
+    for course in courses:
+        counts = {value: 0 for value, _ in Task.STATUS_CHOICES}
+        late = 0
+        for task in course.tasks:
+            counts[task.status] = counts.get(task.status, 0) + 1
+            if task.due_date and task.due_date < today and task.status != Task.STATUS_DONE:
+                late += 1
+        total = sum(counts.values())
+        completion = (counts[Task.STATUS_DONE] / total * 100) if total else 0
+        summaries.append(
+            {
+                "course": course,
+                "counts": counts,
+                "total": total,
+                "late": late,
+                "completion": completion,
+            }
+        )
+
+    return render_template(
+        "main/analytics.html",
+        course_summaries=summaries,
+        status_labels=status_labels,
+    )
 
 
 @main_bp.route("/feature")

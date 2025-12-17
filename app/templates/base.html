@@ -9,6 +9,9 @@
   <nav class="navbar">
     <a href="{{ url_for('main.index') }}">Home</a>
     <a href="{{ url_for('main.courses') }}">Courses</a>
+    {% if current_user.is_authenticated and (current_user.is_instructor or current_user.is_ta) %}
+      <a href="{{ url_for('main.analytics') }}">Analytics</a>
+    {% endif %}
     <a href="{{ url_for('main.feature') }}">Feature</a>
 
     {% if current_user.is_authenticated %}

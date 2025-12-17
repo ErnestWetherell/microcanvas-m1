@@ -1,3 +1,4 @@
+from app import db
 from app.models import Course, Task, TaskComment, User
 from app.main.routes import _ensure_sample_data
 
@@ -58,8 +59,21 @@ def test_instructor_can_create_task(client, app):
     assert b"Task created" in resp.data
 
     with app.app_context():
-        refreshed = Course.query.get(course.id)
+        refreshed = db.session.get(Course, course.id)
         assert len(refreshed.tasks) == tasks_before + 1
+
+
+def test_course_board_renders_columns(client, app):
+    seed_demo(app)
+    login(client, "student@example.com")
+    with app.app_context():
+        course = Course.query.filter_by(code="CMPE 131").first()
+
+    resp = client.get(f"/courses/{course.id}", follow_redirects=True)
+    assert resp.status_code == 200
+    assert b"Task board" in resp.data
+    assert b"In progress" in resp.data
+    assert b"Team" in resp.data
 
 
 def test_courses_requires_auth(client):
@@ -84,7 +98,7 @@ def test_student_updates_task_status(client, app):
     assert b"Task status updated" in resp.data
 
     with app.app_context():
-        updated = Task.query.get(task.id)
+        updated = db.session.get(Task, task.id)
         assert updated.status == Task.STATUS_DONE
 
 
@@ -103,7 +117,7 @@ def test_instructor_can_move_task_between_columns(client, app):
     assert resp.status_code == 200
 
     with app.app_context():
-        refreshed = Task.query.get(task.id)
+        refreshed = db.session.get(Task, task.id)
         assert refreshed.status == Task.STATUS_TODO
 
 
@@ -145,6 +159,18 @@ def test_student_cannot_leave_feedback(client, app):
         assert TaskComment.query.count() == 0
 
 
+def test_team_page_renders_members_and_tasks(client, app):
+    seed_demo(app)
+    login(client, "student@example.com")
+    with app.app_context():
+        team = Task.query.filter(Task.team_id.isnot(None)).first().team
+
+    resp = client.get(f"/teams/{team.id}", follow_redirects=True)
+    assert resp.status_code == 200
+    assert b"Members" in resp.data
+    assert b"Team tasks" in resp.data
+
+
 def test_student_cannot_access_instructor_task_page(client, app):
     seed_demo(app)
     login(client, "student@example.com")
@@ -154,6 +180,24 @@ def test_student_cannot_access_instructor_task_page(client, app):
     resp = client.get(f"/courses/{course.id}/tasks/new")
     assert resp.status_code == 403
     assert b"Access denied" in resp.data
+
+
+def test_instructor_can_view_analytics(client, app):
+    seed_demo(app)
+    login(client, "prof@example.com")
+
+    resp = client.get("/analytics")
+    assert resp.status_code == 200
+    assert b"Course analytics" in resp.data
+    assert b"CMPE 131" in resp.data
+
+
+def test_student_cannot_view_analytics(client, app):
+    seed_demo(app)
+    login(client, "student@example.com")
+
+    resp = client.get("/analytics")
+    assert resp.status_code == 403
 
 
 def test_missing_page_shows_custom_404(client, app):
