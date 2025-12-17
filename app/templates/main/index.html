@@ -1,59 +1,72 @@
 {% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
 
 {% block content %}
-  <h1>Dashboard</h1>
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0">Dashboard</h1>
+  </div>
 
   {% if current_user.is_authenticated %}
-    <p>Welcome back, {{ current_user.email }} ({{ current_user.role }}).</p>
+    <p class="text-muted">Welcome back, {{ current_user.email }} ({{ current_user.role }}).</p>
   {% else %}
-    <p>You are not logged in. Use one of the demo accounts below to explore the flows:</p>
-    <ul>
+    <p class="text-muted">
+      You are not logged in. Use one of the demo accounts below to explore the flows:
+    </p>
+    <ul class="mb-4">
       <li>prof@example.com (instructor)</li>
       <li>ta@example.com (ta)</li>
       <li>student@example.com (student)</li>
     </ul>
   {% endif %}
 
-  <section class="card">
-    <h2>Your courses</h2>
-    {% if courses %}
-      <ul>
-        {% for c in courses %}
-          <li>
-            <a href="{{ url_for('main.course_detail', course_id=c.id) }}">
-              {{ c.code }} — {{ c.title }}
-            </a>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p>No enrollments yet. Ask an instructor to add you or browse all <a href="{{ url_for('main.courses') }}">courses</a>.</p>
-    {% endif %}
-  </section>
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="h5">Your courses</h2>
 
-  <section class="card">
-    <h2>This week's tasks</h2>
-    {% if upcoming_tasks %}
-      <ul>
-        {% for t in upcoming_tasks %}
-          <li>
-            {{ t.title }}
-            {% if t.course %}
-              ({{ t.course.code }})
-            {% endif %}
-            {% if t.team %}
-              — team {{ t.team.name }}
-            {% endif %}
-            {% if t.due_date %}
-              — due {{ t.due_date }}
-            {% endif %}
-            — {{ t.points }} pts
-            <a href="{{ url_for('main.course_detail', course_id=t.course_id) }}">Board</a>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p>No tracked tasks for this week.</p>
-    {% endif %}
-  </section>
+          {% if courses %}
+            <ul class="mb-0">
+              {% for c in courses %}
+                <li>
+                  <a href="{{ url_for('main.course_detail', course_id=c.id) }}">
+                    {{ c.code }} - {{ c.title }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No enrollments yet. Browse all <a href="{{ url_for('main.courses') }}">courses</a>.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="h5">This week's tasks</h2>
+
+          {% if upcoming_tasks %}
+            <ul class="mb-0">
+              {% for t in upcoming_tasks %}
+                <li>
+                  {{ t.title }}
+                  {% if t.course %}
+                    ({{ t.course.code }})
+                  {% endif %}
+                  {% if t.due_date %}
+                    due {{ t.due_date }}
+                  {% endif %}
+                  <a class="ms-2" href="{{ url_for('main.course_detail', course_id=t.course_id) }}">Board</a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No tracked tasks for this week.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}

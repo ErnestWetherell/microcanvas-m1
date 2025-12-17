@@ -17,7 +17,7 @@ On the first launch the database seeds demo data automatically. Ready-made accou
 | ---------- | --------------------- | -------- |
 | Instructor | prof@example.com      | (none)   |
 | TA         | ta@example.com        | (none)   |
-| Student    | student@example.com   | (none)   |
+| Students    | student@example.com   | (none)   |
 
 Enter any other email on the login form to auto-create a new student profile.
 
