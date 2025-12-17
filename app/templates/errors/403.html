@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="card">
+    <h1>Access denied</h1>
+    <p>You tried to open a page that is limited to instructors in this prototype. Please log in with an instructor account or head back to your dashboard.</p>
+    <p>
+      <a href="{{ url_for('main.index') }}">Return to dashboard</a>
+      {% if not current_user.is_instructor %}
+        or log out and sign in as <strong>prof@example.com</strong>.
+      {% endif %}
+    </p>
+  </section>
+{% endblock %}

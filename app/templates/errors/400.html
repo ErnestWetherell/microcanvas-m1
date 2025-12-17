@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="card">
+    <h1>We couldn't process that</h1>
+    <p>The request you sent looked malformed or had missing data. Please go back and try again.</p>
+    <p>
+      <a href="{{ request.referrer or url_for('main.index') }}">Return to the previous page</a>
+      or visit your <a href="{{ url_for('main.index') }}">dashboard</a>.
+    </p>
+  </section>
+{% endblock %}

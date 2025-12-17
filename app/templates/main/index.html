@@ -6,18 +6,67 @@
     <h1 class="h3 mb-0">Dashboard</h1>
   </div>
 
-  <div class="card">
-    <div class="card-body">
-      <h2 class="h5">Courses</h2>
-      {% if courses %}
-        <ul class="mb-0">
-          {% for c in courses %}
-            <li>{{ c }}</li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="text-muted mb-0">No courses yet.</p>
-      {% endif %}
+  {% if current_user.is_authenticated %}
+    <p class="text-muted">Welcome back, {{ current_user.email }} ({{ current_user.role }}).</p>
+  {% else %}
+    <p class="text-muted">
+      You are not logged in. Use one of the demo accounts below to explore the flows:
+    </p>
+    <ul class="mb-4">
+      <li>prof@example.com (instructor)</li>
+      <li>ta@example.com (ta)</li>
+      <li>student@example.com (student)</li>
+    </ul>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="h5">Your courses</h2>
+
+          {% if courses %}
+            <ul class="mb-0">
+              {% for c in courses %}
+                <li>
+                  <a href="{{ url_for('main.course_detail', course_id=c.id) }}">
+                    {{ c.code }} - {{ c.title }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No enrollments yet. Browse all <a href="{{ url_for('main.courses') }}">courses</a>.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="h5">This week's tasks</h2>
+
+          {% if upcoming_tasks %}
+            <ul class="mb-0">
+              {% for t in upcoming_tasks %}
+                <li>
+                  {{ t.title }}
+                  {% if t.course %}
+                    ({{ t.course.code }})
+                  {% endif %}
+                  {% if t.due_date %}
+                    due {{ t.due_date }}
+                  {% endif %}
+                  <a class="ms-2" href="{{ url_for('main.course_detail', course_id=t.course_id) }}">Board</a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No tracked tasks for this week.</p>
+          {% endif %}
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}

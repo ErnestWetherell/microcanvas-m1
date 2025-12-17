@@ -1,5 +1,37 @@
-body { font-family: Arial; margin: 0; }
-.navbar { background: #222; padding: 10px; }
+body { font-family: Arial; margin: 0; background: #f5f5f7; color: #222; }
+.navbar { background: #222; padding: 10px; color: white; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
 .navbar a { color: white; margin-right: 15px; text-decoration: none; }
 .navbar a:hover { text-decoration: underline; }
-.flashes { background: #ffeeaa; padding: 10px; }
+.nav-right { margin-left: auto; font-size: 0.9rem; display: flex; gap: 0.5rem; align-items: center; }
+.flashes { background: #ffeeaa; padding: 10px; margin: 0; list-style: none; }
+.card { background: #fff; border: 1px solid #ddd; padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+.board-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+.board-column { background: #fafafa; border: 1px solid #e2e2e2; padding: 0.75rem; border-radius: 8px; min-height: 200px; }
+.task-card { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.task-card header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.task-points { font-size: 0.85rem; color: #555; }
+.task-meta { font-size: 0.85rem; color: #666; margin: 0; }
+.status-form { margin-top: 0.5rem; display: flex; gap: 0.4rem; }
+.status-form select { flex: 1; padding: 0.2rem; }
+.status-form button { padding: 0.25rem 0.75rem; border: none; background: #2563eb; color: white; border-radius: 4px; cursor: pointer; }
+.status-form button:hover { background: #1e4fc9; }
+.empty-state { color: #777; font-style: italic; }
+.text-link { display: inline-block; margin-top: 0.5rem; font-size: 0.9rem; }
+.task-comments { border-top: 1px solid #eee; margin-top: 0.5rem; padding-top: 0.5rem; }
+.task-comments ul { list-style: none; padding-left: 0; margin: 0; }
+.task-comments li { margin-bottom: 0.4rem; }
+.task-comments p { margin: 0.2rem 0 0; }
+.comment-author { font-weight: bold; margin-right: 0.4rem; }
+.comment-form { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.comment-form textarea { width: 100%; padding: 0.4rem; font-family: inherit; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
+.comment-form button { align-self: flex-end; padding: 0.3rem 0.8rem; border: none; background: #059669; color: white; border-radius: 4px; cursor: pointer; }
+.comment-form button:hover { background: #047857; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+main { padding: 1.5rem; }
+ul { padding-left: 1.2rem; }
+@media (max-width: 600px) {
+  .navbar { flex-direction: column; align-items: flex-start; }
+  .nav-right { margin-left: 0; }
+  .status-form { flex-direction: column; }
+}

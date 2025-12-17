@@ -26,6 +26,11 @@
       {{ form.points() }} (default 100)
     </p>
 
+    <p>
+      {{ form.team_id.label }}<br>
+      {{ form.team_id() }}
+    </p>
+
     <p>{{ form.submit() }}</p>
   </form>
 {% endblock %}
