@@ -137,10 +137,41 @@ def test_student_cannot_leave_feedback(client, app):
     resp = client.post(
         f"/tasks/{task.id}/comments",
         data={"body": "I should not do this"},
-        follow_redirects=True,
     )
-    assert resp.status_code == 200
-    assert b"Only instructors or TAs" in resp.data
+    assert resp.status_code == 403
+    assert b"Access denied" in resp.data
 
     with app.app_context():
         assert TaskComment.query.count() == 0
+
+
+def test_student_cannot_access_instructor_task_page(client, app):
+    seed_demo(app)
+    login(client, "student@example.com")
+    with app.app_context():
+        course = Course.query.filter_by(code="CMPE 131").first()
+
+    resp = client.get(f"/courses/{course.id}/tasks/new")
+    assert resp.status_code == 403
+    assert b"Access denied" in resp.data
+
+
+def test_missing_page_shows_custom_404(client, app):
+    seed_demo(app)
+    login(client, "student@example.com")
+    resp = client.get("/totally-missing")
+    assert resp.status_code == 404
+    assert b"Page not found" in resp.data
+
+
+def test_bad_status_input_returns_400_page(client, app):
+    seed_demo(app)
+    login(client, "student@example.com")
+    with app.app_context():
+        task = Task.query.first()
+    resp = client.post(
+        f"/tasks/{task.id}/status",
+        data={"status": "not-valid"},
+    )
+    assert resp.status_code == 400
+    assert b"We couldn't process that" in resp.data

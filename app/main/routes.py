@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, abort
 from flask_login import current_user, login_required
 from app.main import main_bp
 from app import db
@@ -174,8 +174,7 @@ def new_task(course_id):
     course = Course.query.get_or_404(course_id)
 
     if not current_user.is_instructor:
-        flash("Only instructors can create tasks.")
-        return redirect(url_for("main.course_detail", course_id=course.id))
+        abort(403)
 
     form = TaskForm()
     form.team_id.choices = [(0, "Whole course")] + [
@@ -212,8 +211,7 @@ def update_task_status(task_id):
     form.status.choices = Task.STATUS_CHOICES
 
     if not form.validate_on_submit():
-        flash("Invalid status update.")
-        return redirect(request.referrer or url_for("main.course_detail", course_id=task.course_id))
+        abort(400)
 
     task.status = form.status.data
     db.session.commit()
@@ -226,8 +224,7 @@ def update_task_status(task_id):
 def add_task_comment(task_id):
     task = Task.query.get_or_404(task_id)
     if not current_user.can_review_tasks:
-        flash("Only instructors or TAs can leave feedback.")
-        return redirect(request.referrer or url_for("main.course_detail", course_id=task.course_id))
+        abort(403)
 
     form = TaskCommentForm()
     if form.validate_on_submit():
@@ -249,8 +246,7 @@ def add_task_comment(task_id):
 def grade_task(task_id):
     """Prototype-grade: instructor sets a single score for the task."""
     if not current_user.is_instructor:
-        flash("Only instructors can enter grades.")
-        return redirect(url_for("main.index"))
+        abort(403)
 
     task = Task.query.get_or_404(task_id)
     form = GradeForm()
@@ -273,8 +269,7 @@ def grade_task(task_id):
 def create_team(course_id):
     course = Course.query.get_or_404(course_id)
     if not current_user.is_instructor:
-        flash("Only instructors can manage teams.")
-        return redirect(url_for("main.course_detail", course_id=course.id))
+        abort(403)
 
     form = TeamForm()
     if form.validate_on_submit():
@@ -325,8 +320,7 @@ def team_detail(team_id):
 def add_team_member(team_id):
     team = Team.query.get_or_404(team_id)
     if not current_user.is_instructor:
-        flash("Only instructors can add team members.")
-        return redirect(url_for("main.team_detail", team_id=team.id))
+        abort(403)
 
     form = TeamMemberForm()
     available = [

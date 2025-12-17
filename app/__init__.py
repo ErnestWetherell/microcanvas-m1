@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
@@ -26,5 +26,26 @@ def create_app(config_object="app.config.Config"):
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return (
+            render_template("errors/404.html", error=error),
+            404,
+        )
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        return (
+            render_template("errors/400.html", error=error),
+            400,
+        )
+
+    @app.errorhandler(403)
+    def forbidden(error):
+        return (
+            render_template("errors/403.html", error=error),
+            403,
+        )
 
     return app
